@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 from pathlib import Path
 import os 
+import dj_database_url
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -79,12 +80,10 @@ WSGI_APPLICATION = 'Edusec.wsgi.application'
 
 DATABASES = {
     'default': dj_database_url.config( # type: ignore
-        default='sqlite:///db.sqlite3', 
-        conn_max_age=600 
+        default='sqlite:///db.sqlite3', # Valor predeterminado para desarrollo local
+        conn_max_age=600 # Opcional: Reconexión de base de datos
     )
 }
-
-
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
 
