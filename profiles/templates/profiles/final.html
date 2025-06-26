@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% block title %}Resultados | EduSec{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8 col-md-10">
+        <div class="card p-4 shadow-sm text-center">
+            <h2 class="card-title mb-4">¡Simulación Completada!</h2>
+            <p class="lead">Has completado todos los escenarios de ciberseguridad.</p>
+
+            <div class="alert alert-info py-3 mb-4">
+                <h3>Tu Puntaje Final: <strong class="text-primary">{{ puntaje }} / {{ total }}</strong></h3>
+            </div>
+
+            {% if puntaje == total %}
+            <p class="text-success fs-5">¡Excelente trabajo! Demostraste un gran conocimiento en ciberseguridad.</p>
+            {# CAMBIO AQUI: Usamos la nueva variable 'half_total' calculada en la vista #}
+            {% elif puntaje > half_total %}
+            <p class="text-warning fs-5">¡Buen esfuerzo! Continúa practicando para mejorar tus habilidades.</p>
+            {% else %}
+            <p class="text-danger fs-5">Recuerda la importancia de la ciberseguridad. ¡No te rindas y sigue aprendiendo!</p>
+            {% endif %}
+
+            <p class="mt-4">
+                <a href="{% url 'profiles:inicio' %}" class="btn btn-edusec btn-lg">Volver al Inicio</a>
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}

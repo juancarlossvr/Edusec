@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Inicio | EduSec{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8 col-md-10">
+        <div class="text-center mb-4">
+            <img src="{% static 'profiles/img/edusec_logo.png' %}" alt="EduSec Logo" class="img-fluid mb-3" style="max-height: 150px;">
+            <h1>Bienvenido a EduSec</h1>
+            <p class="lead">
+                <p>EduSec es una <strong>aplicación interactiva</strong> diseñada para ayudarte a reconocer y responder ante amenazas cibernéticas comunes, como phishing y malware, a través de escenarios prácticos y simulaciones.</p>
+                <p>En un mundo cada vez más digitalizado, tu seguridad en línea es crucial. ¡Prepárate para fortalecer tus conocimientos en ciberseguridad!</p>
+            </p>
+        </div>
+
+        <div class="card p-4 shadow-sm">
+            <h3 class="card-title text-center mb-4">Inicia tu Experiencia</h3>
+            <form method="post" class="needs-validation" novalidate>
+                {% csrf_token %}
+                {# Renderizar campos del formulario ParticipanteForm #}
+                {% for field in form %}
+                <div class="mb-3">
+                    <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+                    {{ field }}
+                    {% if field.help_text %}
+                    <div class="form-text">{{ field.help_text }}</div>
+                    {% endif %}
+                    {% for error in field.errors %}
+                    <div class="invalid-feedback d-block">
+                        {{ error }}
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endfor %}
+                <div class="d-grid gap-2 mt-4">
+                    <button type="submit" class="btn btn-edusec btn-lg">Comenzar Simulación</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

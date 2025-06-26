@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Escenario | EduSec{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8 col-md-10">
+        <div class="card p-4 shadow-sm">
+            <h2 class="card-title mb-3">{{ escenario.titulo }}</h2>
+            <p class="card-text mb-4">{{ escenario.descripcion|linebreaksbr }}</p> {# Permite saltos de línea #}
+
+            <form method="post" id="scenario-form">
+                {% csrf_token %}
+                <div class="scenario-options">
+                    {% for opcion_texto, opcion_valor in escenario.opciones.items %}
+                    <label class="scenario-option-item d-flex align-items-center mb-3 p-3 border rounded" for="id_respuesta_dada_{{ forloop.counter }}">
+                        <input type="radio" 
+                               name="respuesta_dada" 
+                               id="id_respuesta_dada_{{ forloop.counter }}" 
+                               value="{{ opcion_valor }}" 
+                               class="radio-hidden me-3" 
+                               required>
+                        <span>{{ opcion_texto }}</span>
+                    </label>
+                    {% endfor %}
+                </div>
+
+                {% if form.respuesta_dada.errors %}
+                <div class="alert alert-danger mt-3">
+                    {% for error in form.respuesta_dada.errors %}
+                    {{ error }}
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                <div class="d-grid gap-2 mt-4">
+                    <button type="submit" class="btn btn-edusec btn-lg">Enviar Respuesta</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const optionItems = document.querySelectorAll('.scenario-option-item');
+    optionItems.forEach(item => {
+        item.addEventListener('click', function() {
+            // Deseleccionar todos los ítems primero
+            optionItems.forEach(opt => opt.classList.remove('selected'));
+            // Seleccionar el ítem clickeado y marcar su radio button
+            this.classList.add('selected');
+            this.querySelector('input[type="radio"]').checked = true;
+        });
+    });
+
+    // Para asegurar que el campo oculto se rellena si se envía sin JS
+    const form = document.getElementById('scenario-form');
+    form.addEventListener('submit', function(event) {
+        const selectedRadio = form.querySelector('input[name="respuesta_dada"]:checked');
+        if (!selectedRadio) {
+            alert('Por favor, selecciona una opción.');
+            event.preventDefault(); // Evita el envío del formulario
+        }
+    });
+});
+</script>
+{% endblock %}
