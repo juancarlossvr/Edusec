@@ -1,29 +1,30 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from .models import Escenario, PerfilUsuario, RespuestaUsuario, MensajeChat
+from django.template import TemplateDoesNotExist
+from .models import Escenario, PerfilUsuario, RespuestaUsuario, MensajeChat, Insignia, TerminoGlosario
 from .forms import ParticipanteForm, RespuestaForm
 
 def inicio_view(request):
     if request.method == 'POST':
         form = ParticipanteForm(request.POST)
         if form.is_valid():
-            # Evita duplicados si el usuario ya existe
             nombre = form.cleaned_data['nombre']
             participante, created = PerfilUsuario.objects.get_or_create(nombre=nombre, defaults=form.cleaned_data)
             
-            # Si no fue creado, actualiza sus datos y limpia respuestas previas
             if not created:
-                RespuestaUsuario.objects.filter(participante=participante).delete() # Limpia para nueva simulación
+                RespuestaUsuario.objects.filter(participante=participante).delete()
                 participante.curso = form.cleaned_data['curso']
                 participante.edad = form.cleaned_data['edad']
                 participante.genero = form.cleaned_data['genero']
                 participante.save()
 
             request.session['participante_id'] = participante.id
-            primer_escenario = Escenario.objects.order_by('id').first()
+            request.session['participante_nombre'] = participante.nombre
+
+            primer_escenario = Escenario.objects.order_by('pk').first()
             if primer_escenario:
-                return redirect('profiles:escenario', pk=primer_escenario.id)
+                return redirect('profiles:escenario', pk=primer_escenario.pk)
             else:
-                return redirect('profiles:final') # Si no hay escenarios, va a la página final
+                return redirect('profiles:final')
     else:
         form = ParticipanteForm()
     return render(request, 'profiles/inicio.html', {'form': form})
@@ -37,8 +38,12 @@ def escenario_view(request, pk):
     
     participante = get_object_or_404(PerfilUsuario, pk=participante_id)
 
+    total_escenarios = Escenario.objects.count()
+    escenarios_completados = RespuestaUsuario.objects.filter(participante=participante).count()
+    progreso = (escenarios_completados / total_escenarios) * 100 if total_escenarios > 0 else 0
+
     if request.method == 'POST':
-        form = RespuestaForm(request.POST)
+        form = RespuestaForm(request.POST) 
         if form.is_valid():
             respuesta_dada = form.cleaned_data['respuesta_dada']
             es_correcta = respuesta_dada == escenario.respuesta_correcta
@@ -56,8 +61,21 @@ def escenario_view(request, pk):
                 return redirect('profiles:final')
     else:
         form = RespuestaForm()
+
+    template_name = f'profiles/escenario_{escenario.tipo}.html'
     
-    return render(request, 'profiles/escenario.html', {'escenario': escenario, 'form': form})
+    context = {
+        'escenario': escenario,
+        'form': form,
+        'progreso': progreso,
+        'escenario_actual': escenarios_completados + 1,
+        'total_escenarios': total_escenarios,
+    }
+    
+    try:
+        return render(request, template_name, context)
+    except TemplateDoesNotExist:
+        return render(request, 'profiles/escenario.html', context)
 
 def final_view(request):
     participante_id = request.session.get('participante_id')
@@ -65,34 +83,77 @@ def final_view(request):
         return redirect('profiles:inicio')
         
     participante = get_object_or_404(PerfilUsuario, pk=participante_id)
-    respuestas = RespuestaUsuario.objects.filter(participante=participante)
+    respuestas = RespuestaUsuario.objects.filter(participante=participante).select_related('escenario')
     puntaje = respuestas.filter(es_correcta=True).count()
     total = respuestas.count()
-    half_total = total / 2 if total > 0 else 0
 
-    return render(request, 'profiles/final.html', {
+    insignias_ganadas = []
+    if puntaje == total and total > 0:
+        insignia, _ = Insignia.objects.get_or_create(
+            nombre="Maestro de la Ciberseguridad", 
+            defaults={'descripcion': "Completaste la simulación con un puntaje perfecto.", 'icono': 'fas fa-crown'}
+        )
+        participante.insignias.add(insignia)
+        insignias_ganadas.append(insignia)
+
+    if puntaje >= total * 0.75 and total > 0:
+        insignia, _ = Insignia.objects.get_or_create(
+            nombre="Detective Digital", 
+            defaults={'descripcion': "Lograste un puntaje sobresaliente.", 'icono': 'fas fa-search-plus'}
+        )
+        participante.insignias.add(insignia)
+        insignias_ganadas.append(insignia)
+    
+    participante.puntaje_total += puntaje
+    participante.save()
+
+    context = {
+        'participante': participante,
         'puntaje': puntaje,
         'total': total,
-        'half_total': half_total,
-    })
+        'respuestas': respuestas,
+        'insignias_ganadas': insignias_ganadas
+    }
+    return render(request, 'profiles/final.html', context)
 
 def chatbot_view(request):
     mensaje_actual = None
     if request.method == 'POST':
-        # El usuario ha seleccionado una opción
         opcion_elegida_id = request.POST.get('user_choice')
         if opcion_elegida_id:
             try:
-                # Intenta encontrar el siguiente mensaje basado en la opción
                 mensaje_actual = get_object_or_404(MensajeChat, pk=int(opcion_elegida_id))
             except (ValueError, MensajeChat.DoesNotExist):
-                # Si hay un error, vuelve al principio
                 mensaje_actual = get_object_or_404(MensajeChat, pk=1)
         else:
-            # Si no hay opción, vuelve al principio
             mensaje_actual = get_object_or_404(MensajeChat, pk=1)
     else:
-        # Es la primera vez que se carga la página
         mensaje_actual = get_object_or_404(MensajeChat, pk=1)
 
     return render(request, 'profiles/chatbot.html', {'current_message': mensaje_actual})
+
+def glosario_view(request):
+    terminos = TerminoGlosario.objects.all()
+    context = {
+        'terminos': terminos
+    }
+    return render(request, 'profiles/glosario.html', context)
+
+def perfil_view(request):
+    participante_id = request.session.get('participante_id')
+    if not participante_id:
+        return redirect('profiles:inicio')
+
+    participante = get_object_or_404(PerfilUsuario, pk=participante_id)
+    
+    todas_las_insignias = Insignia.objects.all()
+    insignias_ganadas_ids = set(participante.insignias.values_list('id', flat=True))
+    total_simulaciones = RespuestaUsuario.objects.filter(participante=participante).values('escenario').distinct().count()
+
+    context = {
+        'participante': participante,
+        'todas_las_insignias': todas_las_insignias,
+        'insignias_ganadas_ids': insignias_ganadas_ids,
+        'total_simulaciones': total_simulaciones,
+    }
+    return render(request, 'profiles/perfil.html', context)
