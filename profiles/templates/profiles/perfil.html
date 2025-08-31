@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Mi Perfil | EduSec{% endblock %}
+
+{% block content %}
+<div class="profile-header text-center mb-5">
+    <i class="fas fa-user-circle fa-4x text-primary mb-3"></i>
+    <h1 class="display-5">Hola, {{ participante.nombre }}</h1>
+    <p class="lead">Este es tu resumen de progreso en EduSec.</p>
+</div>
+
+<div class="row text-center g-4 mb-5">
+    <div class="col-md-4" data-aos="fade-up" data-aos-delay="100">
+        <div class="stat-card">
+            <div class="stat-icon"><i class="fas fa-star"></i></div>
+            <div class="stat-value">{{ participante.puntaje_total }}</div>
+            <div class="stat-label">Puntaje Total</div>
+        </div>
+    </div>
+    <div class="col-md-4" data-aos="fade-up" data-aos-delay="200">
+        <div class="stat-card">
+            <div class="stat-icon"><i class="fas fa-trophy"></i></div>
+            <div class="stat-value">{{ insignias_ganadas_ids|length }} / {{ todas_las_insignias|length }}</div>
+            <div class="stat-label">Insignias Desbloqueadas</div>
+        </div>
+    </div>
+    <div class="col-md-4" data-aos="fade-up" data-aos-delay="300">
+        <div class="stat-card">
+            <div class="stat-icon"><i class="fas fa-tasks"></i></div>
+            <div class="stat-value">{{ total_simulaciones }}</div>
+            <div class="stat-label">Simulaciones Completadas</div>
+        </div>
+    </div>
+</div>
+
+<h2 class="text-center mb-4" data-aos="fade-up">Tu Colección de Insignias</h2>
+<div class="row g-3">
+    {% for insignia in todas_las_insignias %}
+    <div class="col-md-4" data-aos="fade-up" data-aos-delay="{{ forloop.counter0|add:'1' }}00">
+        {% if insignia.id in insignias_ganadas_ids %}
+        <div class="badge-card unlocked">
+            <div class="badge-icon-unlocked"><i class="{{ insignia.icono }} fa-3x"></i></div>
+            <h5 class="badge-title">{{ insignia.nombre }}</h5>
+            <p class="badge-description">{{ insignia.descripcion }}</p>
+        </div>
+        {% else %}
+        <div class="badge-card locked">
+            <div class="badge-icon-locked"><i class="fas fa-lock fa-3x"></i></div>
+            <h5 class="badge-title">Insignia Bloqueada</h5>
+            <p class="badge-description">???</p>
+        </div>
+        {% endif %}
+    </div>
+    {% endfor %}
+</div>
+
+{% endblock %}

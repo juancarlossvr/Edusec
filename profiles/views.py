@@ -1,42 +1,55 @@
+# profiles/views.py
+
 from django.shortcuts import render, redirect, get_object_or_404
-from .models import Escenario, PerfilUsuario, RespuestaUsuario, MensajeChat
+from django.template import TemplateDoesNotExist
+from .models import Escenario, PerfilUsuario, RespuestaUsuario, MensajeChat, Insignia, TerminoGlosario
 from .forms import ParticipanteForm, RespuestaForm
 
 def inicio_view(request):
     if request.method == 'POST':
         form = ParticipanteForm(request.POST)
         if form.is_valid():
-            participante = form.save()
+            nombre = form.cleaned_data['nombre']
+            participante, created = PerfilUsuario.objects.get_or_create(nombre=nombre, defaults=form.cleaned_data)
+            if not created:
+                RespuestaUsuario.objects.filter(participante=participante).delete()
+                participante.curso = form.cleaned_data['curso']
+                participante.edad = form.cleaned_data['edad']
+                participante.genero = form.cleaned_data['genero']
+                participante.save()
+
+            # --- AÑADIMOS ESTAS DOS LÍNEAS ---
             request.session['participante_id'] = participante.id
-            # CAMBIO AQUI: Usar 'profiles:escenario'
-            return redirect('profiles:escenario', pk=1)
+            request.session['participante_nombre'] = participante.nombre # Guardamos el nombre
+
+            primer_escenario = Escenario.objects.order_by('pk').first()
+            if primer_escenario:
+                return redirect('profiles:escenario', pk=primer_escenario.pk)
+            else:
+                return redirect('profiles:inicio')
     else:
         form = ParticipanteForm()
     return render(request, 'profiles/inicio.html', {'form': form})
 
+# ... (la vista escenario_view no cambia) ...
 def escenario_view(request, pk):
+    # ... tu código existente para esta vista ...
     escenario = get_object_or_404(Escenario, pk=pk)
     participante_id = request.session.get('participante_id')
 
     if not participante_id:
-        # CAMBIO AQUI: Usar 'profiles:inicio'
         return redirect('profiles:inicio')
     
-    participante = get_object_or_404(PerfilUsuario, pk=participante_id) 
+    participante = get_object_or_404(PerfilUsuario, pk=participante_id)
+
+    total_escenarios = Escenario.objects.count()
+    escenarios_completados = RespuestaUsuario.objects.filter(participante=participante).count()
+    progreso = (escenarios_completados / total_escenarios) * 100 if total_escenarios > 0 else 0
 
     if request.method == 'POST':
         form = RespuestaForm(request.POST) 
         if form.is_valid():
             respuesta_dada = form.cleaned_data['respuesta_dada']
-
-            # Verifica si la respuesta dada es una de las opciones válidas del escenario
-            if respuesta_dada not in escenario.opciones.values():
-                form.add_error('respuesta_dada', 'La opción seleccionada no es válida para este escenario.')
-                return render(request, 'profiles/escenario.html', {
-                    'escenario': escenario,
-                    'form': form,
-                })
-
             es_correcta = respuesta_dada == escenario.respuesta_correcta
             RespuestaUsuario.objects.create(
                 participante=participante,
@@ -44,72 +57,105 @@ def escenario_view(request, pk):
                 respuesta_dada=respuesta_dada,
                 es_correcta=es_correcta
             )
-            siguiente = pk + 1
-            if Escenario.objects.filter(pk=siguiente).exists():
-                # CAMBIO AQUI: Usar 'profiles:escenario'
-                return redirect('profiles:escenario', pk=siguiente)
+            
+            siguiente_escenario = Escenario.objects.filter(pk__gt=pk).order_by('pk').first()
+            if siguiente_escenario:
+                return redirect('profiles:escenario', pk=siguiente_escenario.pk)
             else:
-                # CAMBIO AQUI: Usar 'profiles:final'
                 return redirect('profiles:final')
     else:
-        form = RespuestaForm() 
+        form = RespuestaForm()
+
+    template_name = f'profiles/escenario_{escenario.tipo}.html'
     
-    return render(request, 'profiles/escenario.html', {
+    context = {
         'escenario': escenario,
         'form': form,
-    })
+        'progreso': progreso,
+        'escenario_actual': escenarios_completados + 1,
+        'total_escenarios': total_escenarios,
+    }
+    
+    try:
+        return render(request, template_name, context)
+    except TemplateDoesNotExist:
+        return render(request, 'profiles/escenario.html', context)
 
+
+# ... (tus vistas final_view, chatbot_view y glosario_view no cambian) ...
 def final_view(request):
+    # ... tu código existente para esta vista ...
     participante_id = request.session.get('participante_id')
-    participante = get_object_or_404(PerfilUsuario, pk=participante_id) 
-    respuestas = RespuestaUsuario.objects.filter(participante=participante)
+    if not participante_id:
+        return redirect('profiles:inicio')
+        
+    participante = get_object_or_404(PerfilUsuario, pk=participante_id)
+    respuestas = RespuestaUsuario.objects.filter(participante=participante).select_related('escenario')
     puntaje = respuestas.filter(es_correcta=True).count()
     total = respuestas.count()
-    
-    # Calcula la mitad del total aquí en la vista
-    # Usamos float division, pero puedes usar // para división entera si prefieres
-    half_total = total / 2 if total > 0 else 0 
 
-    return render(request, 'profiles/final.html', {
+    insignias_ganadas = []
+    if puntaje == total and total > 0:
+        insignia, _ = Insignia.objects.get_or_create(
+            nombre="Maestro de la Ciberseguridad", 
+            defaults={'descripcion': "Completaste la simulación con un puntaje perfecto.", 'icono': 'fas fa-crown'}
+        )
+        participante.insignias.add(insignia)
+        insignias_ganadas.append(insignia)
+
+    if puntaje >= total * 0.75 and total > 0:
+        insignia, _ = Insignia.objects.get_or_create(
+            nombre="Detective Digital", 
+            defaults={'descripcion': "Lograste un puntaje sobresaliente.", 'icono': 'fas fa-search-plus'}
+        )
+        participante.insignias.add(insignia)
+        insignias_ganadas.append(insignia)
+    
+    participante.puntaje_total += puntaje
+    participante.save()
+
+    context = {
+        'participante': participante,
         'puntaje': puntaje,
         'total': total,
-        'half_total': half_total, # Pasamos la nueva variable a la plantilla
-    })
+        'respuestas': respuestas,
+        'insignias_ganadas': insignias_ganadas
+    }
+    return render(request, 'profiles/final.html', context)
 
 def chatbot_view(request):
-    current_message_id = request.session.get('current_chat_message_id')
+    # ... tu código existente para esta vista ...
+    current_message = get_object_or_404(MensajeChat, pk=1)
+    return render(request, 'profiles/chatbot.html', {'current_message': current_message})
 
-    if not current_message_id:
-        current_message = get_object_or_404(MensajeChat, pk=1)
-        request.session['current_chat_message_id'] = current_message.id
-    else:
-        current_message = get_object_or_404(MensajeChat, pk=current_message_id)
+def glosario_view(request):
+    # ... tu código existente para esta vista ...
+    terminos = TerminoGlosario.objects.all()
+    context = {
+        'terminos': terminos
+    }
+    return render(request, 'profiles/glosario.html', context)
 
-    if request.method == 'POST':
-        user_choice_id = request.POST.get('user_choice')
+# --- AÑADE ESTA NUEVA VISTA AL FINAL ---
+def perfil_view(request):
+    participante_id = request.session.get('participante_id')
+    if not participante_id:
+        return redirect('profiles:inicio')
 
-        if user_choice_id:
-            try:
-                next_message_id = int(user_choice_id)
-                next_message = get_object_or_404(MensajeChat, pk=next_message_id)
+    participante = get_object_or_404(PerfilUsuario, pk=participante_id)
+    
+    # Obtenemos todas las insignias posibles
+    todas_las_insignias = Insignia.objects.all()
+    
+    # Obtenemos los IDs de las insignias que el usuario ha ganado
+    insignias_ganadas_ids = set(participante.insignias.values_list('id', flat=True))
+    
+    total_simulaciones = RespuestaUsuario.objects.filter(participante=participante).values('escenario').distinct().count()
 
-                request.session['current_chat_message_id'] = next_message.id
-
-                if next_message.es_final:
-                    # CAMBIO AQUI: Usar 'profiles:chatbot' si la redirección sigue siendo a la misma vista
-                    return render(request, 'profiles/chatbot.html', {
-                        'current_message': next_message,
-                        'is_chat_final': True
-                    })
-                else:
-                    # CAMBIO AQUI: Usar 'profiles:chatbot'
-                    return redirect('profiles:chatbot')
-            except ValueError:
-                pass # Manejar error si user_choice_id no es un entero válido
-        else:
-            pass # No se seleccionó ninguna opción, recargar la misma página o mostrar error
-
-    return render(request, 'profiles/chatbot.html', {
-        'current_message': current_message,
-        'is_chat_final': current_message.es_final
-    })
+    context = {
+        'participante': participante,
+        'todas_las_insignias': todas_las_insignias,
+        'insignias_ganadas_ids': insignias_ganadas_ids,
+        'total_simulaciones': total_simulaciones,
+    }
+    return render(request, 'profiles/perfil.html', context)

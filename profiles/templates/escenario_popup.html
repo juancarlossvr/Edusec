@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Simulación de Alerta | EduSec{% endblock %}
+
+{% block content %}
+<div class="background-content">
+    <h3>Blog de Tecnología</h3>
+    <p>Últimas noticias sobre procesadores y tarjetas gráficas...</p>
+    <img src="https://via.placeholder.com/600x200.png?text=Artículo+Interesante" class="img-fluid rounded" alt="Artículo de blog">
+    <p class="mt-3">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed non risus. Suspendisse lectus tortor, dignissim sit amet, adipiscing nec, ultricies sed, dolor.</p>
+</div>
+
+<div class="popup-overlay"></div>
+
+<div class="popup-simulation-card">
+    <div class="popup-header">
+        <h5 class="popup-title">{{ escenario.titulo }}</h5>
+    </div>
+    <div class="popup-body">
+        <div class="popup-icon">
+            <i class="fas fa-exclamation-triangle fa-3x text-danger"></i>
+        </div>
+        <div class="popup-text">
+            <p>{{ escenario.descripcion.texto_alerta }}</p>
+            <small>{{ escenario.descripcion.subtexto_alerta }}</small>
+        </div>
+    </div>
+    <div class="popup-footer">
+        <form method="post" class="w-100">
+            {% csrf_token %}
+            <div class="d-grid gap-2">
+            {% for opcion_texto, opcion_valor in escenario.opciones.items %}
+                <button type="submit" name="respuesta_dada" value="{{ opcion_valor }}" class="btn {% if 'scan' in opcion_valor or 'descargar' in opcion_valor %}btn-danger{% else %}btn-secondary{% endif %}">
+                    {{ opcion_texto }}
+                </button>
+            {% endfor %}
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

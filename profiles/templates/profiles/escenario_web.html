@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Simulación Web | EduSec{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+        <div class="mb-4">
+            <h5 class="text-center">Escenario {{ escenario_actual }} de {{ total_escenarios }}</h5>
+            <div class="progress" style="height: 20px;">
+                <div class="progress-bar progress-bar-striped progress-bar-animated bg-success" role="progressbar" style="width: {{ progreso }}%;" aria-valuenow="{{ progreso }}"></div>
+            </div>
+        </div>
+
+        <h3 class="mb-4 text-center">{{ escenario.titulo }}</h3>
+
+        <div class="fake-browser-window">
+            <div class="browser-header">
+                <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+            </div>
+            <div class="address-bar">
+                <i class="fas fa-lock text-muted me-2"></i>
+                <span class="fake-url">{{ escenario.descripcion.url_falsa }}</span>
+            </div>
+            <div class="browser-content">
+                <img src="{% static 'profiles/img/Edusec.png' %}" alt="Logo" height="50">
+                <h4 class="mt-3">{{ escenario.descripcion.titulo_pagina }}</h4>
+                <p>{{ escenario.descripcion.texto_pagina }}</p>
+                <input type="text" class="form-control mb-2" placeholder="Email o teléfono">
+                <input type="password" class="form-control mb-3" placeholder="Contraseña">
+                <button class="btn btn-primary w-100 disabled">Iniciar sesión</button>
+            </div>
+        </div>
+
+        <form method="post" class="mt-4">
+            {% csrf_token %}
+            <h4 class="text-center mb-3">¿Qué haces en esta situación?</h4>
+            <div class="row g-2 justify-content-center">
+                {% for opcion_texto, opcion_valor in escenario.opciones.items %}
+                <div class="col-md-6">
+                    <button type="submit" name="respuesta_dada" value="{{ opcion_valor }}" class="btn btn-option w-100">
+                        {{ opcion_texto }}
+                    </button>
+                </div>
+                {% endfor %}
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

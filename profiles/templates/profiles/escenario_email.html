@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Simulación de Email | EduSec{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+        <div class="mb-4">
+            <h5 class="text-center">Escenario {{ escenario_actual }} de {{ total_escenarios }}</h5>
+            <div class="progress" style="height: 20px;">
+                <div class="progress-bar progress-bar-striped progress-bar-animated bg-success" role="progressbar" style="width: {{ progreso }}%;" aria-valuenow="{{ progreso }}" aria-valuemin="0" aria-valuemax="100">{{ progreso|floatformat:0 }}%</div>
+            </div>
+        </div>
+
+        <h2 class="mb-4 text-center"><i class="fas fa-envelope-open-text me-2"></i>{{ escenario.titulo }}</h2>
+
+        <div class="email-client-simulation">
+            <div class="email-header">
+                <p><strong>De:</strong> {{ escenario.descripcion.remitente }}</p>
+                <p><strong>Asunto:</strong> {{ escenario.descripcion.asunto }}</p>
+            </div>
+            <div class="email-body">
+                {{ escenario.descripcion.cuerpo|linebreaksbr }}
+            </div>
+        </div>
+
+        <form method="post" class="mt-4">
+            {% csrf_token %}
+            <h4 class="text-center mb-3">¿Qué acción tomas?</h4>
+            <div class="row g-2 justify-content-center">
+                {% for opcion_texto, opcion_valor in escenario.opciones.items %}
+                <div class="col-md-5">
+                    <button type="submit" name="respuesta_dada" value="{{ opcion_valor }}" class="btn btn-option w-100">
+                        {{ opcion_texto }}
+                    </button>
+                </div>
+                {% endfor %}
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Simulación de Chat | EduSec{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8 col-md-10">
+        <div class="mb-4">
+            <h5 class="text-center">Escenario {{ escenario_actual }} de {{ total_escenarios }}</h5>
+            <div class="progress" style="height: 20px;">
+                <div class="progress-bar progress-bar-striped progress-bar-animated bg-success" role="progressbar" style="width: {{ progreso }}%;" aria-valuenow="{{ progreso }}"></div>
+            </div>
+        </div>
+        
+        <div class="chat-simulation-window">
+            <div class="chat-header">
+                <i class="fas fa-user-circle me-2"></i>
+                <strong>{{ escenario.descripcion.contacto }}</strong>
+            </div>
+            <div class="chat-messages">
+                {% for mensaje in escenario.descripcion.mensajes %}
+                <div class="message-bubble {{ mensaje.remitente }}">
+                    {{ mensaje.texto }}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <form method="post" class="mt-4">
+            {% csrf_token %}
+            <h4 class="text-center mb-3">¿Cómo respondes?</h4>
+            <div class="row g-2 justify-content-center">
+                {% for opcion_texto, opcion_valor in escenario.opciones.items %}
+                <div class="col-md-6">
+                    <button type="submit" name="respuesta_dada" value="{{ opcion_valor }}" class="btn btn-option w-100">
+                        {{ opcion_texto }}
+                    </button>
+                </div>
+                {% endfor %}
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
