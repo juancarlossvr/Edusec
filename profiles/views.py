@@ -157,3 +157,10 @@ def perfil_view(request):
         'total_simulaciones': total_simulaciones,
     }
     return render(request, 'profiles/perfil.html', context)
+
+def ranking_view(request):
+    participantes = PerfilUsuario.objects.filter(puntaje_total__gt=0).order_by('-puntaje_total')[:100]
+    context = {
+        'participantes': participantes
+    }
+    return render(request, 'profiles/ranking.html', context)

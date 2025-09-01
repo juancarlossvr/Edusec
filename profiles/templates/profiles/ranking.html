@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Ranking de Puntuaciones | EduSec{% endblock %}
+
+{% block content %}
+<div class="text-center mb-5">
+    <h1 class="display-5"><i class="fas fa-trophy text-warning me-2"></i>Ranking de Puntuaciones</h1>
+    <p class="lead">¡Compite por el primer puesto y demuestra quién sabe más de ciberseguridad!</p>
+</div>
+
+<div class="ranking-container">
+    <table class="table table-hover ranking-table">
+        <thead class="table-dark">
+            <tr>
+                <th scope="col" class="text-center">#</th>
+                <th scope="col">Participante</th>
+                <th scope="col">Curso</th>
+                <th scope="col" class="text-end">Puntaje Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for participante in participantes %}
+            <tr data-aos="fade-up" data-aos-delay="{{ forloop.counter0 }}50">
+                <td class="rank-position text-center">
+                    {% if forloop.counter == 1 %}
+                        <i class="fas fa-trophy text-warning"></i>
+                    {% elif forloop.counter == 2 %}
+                        <i class="fas fa-trophy text-secondary"></i>
+                    {% elif forloop.counter == 3 %}
+                        <i class="fas fa-trophy text-bronze"></i>
+                    {% else %}
+                        {{ forloop.counter }}
+                    {% endif %}
+                </td>
+                <td class="rank-name">
+                    <i class="fas fa-user-circle me-2"></i>{{ participante.nombre }}
+                </td>
+                <td>{{ participante.curso }}</td>
+                <td class="rank-score text-end">{{ participante.puntaje_total }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="4" class="text-center text-muted py-4">
+                    Aún no hay puntuaciones en el ranking. ¡Sé el primero en jugar!
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

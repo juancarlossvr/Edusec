@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Error del Servidor | EduSec{% endblock %}
+
+{% block content %}
+<div class="error-page-container text-center">
+    
+    <img src="{% static 'profiles/img/edusec_logo_500.png' %}" alt="EduSec logo enfermo" class="error-image mb-4">
+    
+    <h1 class="display-3">Error 500</h1>
+    <h2 class="mb-4">¡Oh, no! Nuestro sistema se siente un poco mal.</h2>
+    <p class="lead mb-4">
+        Ha ocurrido un error inesperado en nuestros servidores. Ya hemos sido notificados y estamos trabajando para solucionarlo.
+    </p>
+    <a href="{% url 'profiles:inicio' %}" class="btn btn-edusec btn-lg">
+        <i class="fas fa-home me-2"></i>Volver al Inicio
+    </a>
+</div>
+{% endblock %}

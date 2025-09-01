@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Página no encontrada | EduSec{% endblock %}
+
+{% block content %}
+<div class="error-page-container text-center">
+    
+    <img src="{% static 'profiles/img/edusec_logo_404.png' %}" alt="EduSec logo confundido" class="error-image mb-4">
+    
+    <h1 class="display-3">Error 404</h1>
+    <h2 class="mb-4">¡Ups! Parece que esta página se escondió.</h2>
+    <p class="lead mb-4">
+        Nuestro sistema no pudo encontrar la URL que estás buscando. Tal vez fue un error de tipeo o el enlace es antiguo.
+    </p>
+    <a href="{% url 'profiles:inicio' %}" class="btn btn-edusec btn-lg">
+        <i class="fas fa-home me-2"></i>Volver al Inicio
+    </a>
+</div>
+{% endblock %}

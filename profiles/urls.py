@@ -10,4 +10,5 @@ urlpatterns = [
     path('chatbot/', views.chatbot_view, name='chatbot'),
     path('glosario/', views.glosario_view, name='glosario'), 
     path('perfil/', views.perfil_view, name='perfil'),
+    path('ranking/', views.ranking_view, name='ranking'),
 ]

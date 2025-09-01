@@ -29,6 +29,9 @@
                         <a class="nav-link" href="{% url 'profiles:glosario' %}"><i class="fas fa-book-open me-1"></i>Aprende</a>
                     </li>
                     <li class="nav-item">
+                        <a class="nav-link" href="{% url 'profiles:ranking' %}"><i class="fas fa-trophy me-1"></i>Ranking</a>
+                    </li>
+                    <li class="nav-item">
                         <a class="nav-link" href="{% url 'profiles:chatbot' %}">Chatbot </a>
                     </li>
                     {% if request.session.participante_nombre %}
