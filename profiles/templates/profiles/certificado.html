@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Certificado de Finalización</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap');
+        
+        body {
+            font-family: 'Montserrat', sans-serif;
+            border: 10px solid #0d284e;
+            padding: 40px;
+            margin: 0;
+            text-align: center;
+        }
+        .logo {
+            /* WeasyPrint necesita la ruta completa a la imagen. La vista se la provee. */
+            width: 150px;
+            margin-bottom: 20px;
+        }
+        h1 {
+            font-size: 36px;
+            color: #0d284e;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            font-size: 20px;
+            color: #6c757d;
+        }
+        .student-name {
+            font-size: 42px;
+            font-weight: 700;
+            color: #1abc9c;
+            margin: 50px 0;
+            border-bottom: 2px solid #0d284e;
+            display: inline-block;
+            padding-bottom: 10px;
+        }
+        .main-text {
+            font-size: 18px;
+            line-height: 1.6;
+            margin-bottom: 40px;
+        }
+        .footer {
+            margin-top: 60px;
+            font-size: 14px;
+            color: #6c757d;
+        }
+    </style>
+</head>
+<body>
+    
+    <img src="{% static 'profiles/img/edusec_logo.png' %}" class="logo" alt="Logo EduSec">
+
+    <h1>Certificado de Finalización</h1>
+    <p class="subtitle">Otorgado a</p>
+
+    <div class="student-name">{{ participante.nombre }}</div>
+
+    <p class="main-text">
+        Por haber completado exitosamente la simulación de ciberseguridad de EduSec,
+        demostrando habilidades en la identificación de amenazas digitales con un puntaje de
+        <strong>{{ puntaje }}/{{ total }}</strong>.
+    </p>
+
+    <div class="footer">
+        <p>Emitido el {{ fecha }}</p>
+        <p>&copy; {% now "Y" %} EduSec. Juan Velázquez.</p>
+    </div>
+
+</body>
+</html>

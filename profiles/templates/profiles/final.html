@@ -70,7 +70,16 @@
             </div>
             {% endfor %}
         </div>
-
+     
+        <div class="text-center mt-5">
+            <a href="{% url 'profiles:inicio' %}" class="btn btn-outline-edusec btn-lg">
+                <i class="fas fa-redo-alt me-2"></i>Jugar de Nuevo
+            </a>
+            <a href="{% url 'profiles:generar_certificado' %}" class="btn btn-edusec btn-lg">
+                <i class="fas fa-file-pdf me-2"></i>Descargar Certificado
+            </a>
+        </div>
+        
         <div class="text-center mt-5">
             <a href="{% url 'profiles:inicio' %}" class="btn btn-edusec btn-lg">
                 <i class="fas fa-redo-alt me-2"></i>Jugar de Nuevo

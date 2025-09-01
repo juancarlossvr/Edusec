@@ -1,3 +1,7 @@
+from django.http import HttpResponse
+from django.template.loader import render_to_string
+from weasyprint import HTML
+import datetime
 from django.shortcuts import render, redirect, get_object_or_404
 from django.template import TemplateDoesNotExist
 from .models import Escenario, PerfilUsuario, RespuestaUsuario, MensajeChat, Insignia, TerminoGlosario
@@ -164,3 +168,32 @@ def ranking_view(request):
         'participantes': participantes
     }
     return render(request, 'profiles/ranking.html', context)
+
+def generar_certificado_pdf(request):
+    participante_id = request.session.get('participante_id')
+    if not participante_id:
+        return redirect('profiles:inicio')
+
+    participante = get_object_or_404(PerfilUsuario, pk=participante_id)
+    respuestas = RespuestaUsuario.objects.filter(participante=participante)
+    puntaje = respuestas.filter(es_correcta=True).count()
+    total = respuestas.count()
+    
+    fecha_actual = datetime.date.today().strftime("%d de %B de %Y")
+
+    context = {
+        'participante': participante,
+        'puntaje': puntaje,
+        'total': total,
+        'fecha': fecha_actual,
+    }
+
+    html_string = render_to_string('profiles/certificado.html', context)
+    
+    html = HTML(string=html_string, base_url=request.build_absolute_uri())
+    pdf = html.write_pdf()
+
+    response = HttpResponse(pdf, content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="certificado-edusec-{participante.nombre}.pdf"'
+    
+    return response

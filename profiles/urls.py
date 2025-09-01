@@ -11,4 +11,5 @@ urlpatterns = [
     path('glosario/', views.glosario_view, name='glosario'), 
     path('perfil/', views.perfil_view, name='perfil'),
     path('ranking/', views.ranking_view, name='ranking'),
+    path('generar-certificado/', views.generar_certificado_pdf, name='generar_certificado'),
 ]
